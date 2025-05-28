@@ -47,9 +47,9 @@ const VantaGlobe = () => {
             minWidth: 200.0,
             scale: 1.0,
             scaleMobile: 1.0,
-            color: 0xf9975d,
-            color2: 0xdbcdc4,
-            backgroundColor: 0xffffff
+            color: "red",
+            color2: "red",
+            backgroundColor: "gray"
           });
 
           setVantaEffect(effect);
