@@ -49,7 +49,7 @@ const VantaGlobe = () => {
             scaleMobile: 1.0,
             color: "red",
             color2: "red",
-            backgroundColor: "gray"
+            backgroundColor: "white"
           });
 
           setVantaEffect(effect);
