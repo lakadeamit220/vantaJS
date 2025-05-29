@@ -1,28 +1,35 @@
 import React, { useEffect, useRef } from 'react';
 
-const VantaNet = ({ 
+const VantaNet = ({
   children,
-  style = {},
+  // Container styling
+  containerStyle = {},
+  // Vanta.js NET parameters
   color = 0x3a7bd5,
   backgroundColor = 0x07121d,
   points = 12,
   maxDistance = 22,
   spacing = 18,
   showDots = true,
-  showLines = true
+  // Animation controls
+  mouseControls = true,
+  touchControls = true,
+  gyroControls = false,
+  scale = 1.0,
+  scaleMobile = 1.0
 }) => {
   const vantaRef = useRef(null);
   const vantaEffect = useRef(null);
 
   useEffect(() => {
-    // Load three.js from CDN
     const loadScript = (src) => {
       return new Promise((resolve, reject) => {
-        if (document.querySelector(`script[src="${src}"]`)) {
-          resolve();
+        const existingScript = document.querySelector(`script[src="${src}"]`);
+        if (existingScript) {
+          existingScript.onload = resolve;
           return;
         }
-        
+
         const script = document.createElement('script');
         script.src = src;
         script.async = true;
@@ -41,52 +48,59 @@ const VantaNet = ({
           vantaEffect.current = window.VANTA.NET({
             el: vantaRef.current,
             THREE: window.THREE,
-            mouseControls: true,
-            touchControls: true,
-            gyroControls: false,
+            mouseControls,
+            touchControls,
+            gyroControls,
             minHeight: 200,
             minWidth: 200,
-            scale: 1.0,
-            scaleMobile: 1.0,
-            
-            // Customizable properties
-            color: typeof color === 'string' ? parseInt(color.replace('#', '0x')) : color,
-            backgroundColor: typeof backgroundColor === 'string' 
-              ? parseInt(backgroundColor.replace('#', '0x')) 
-              : backgroundColor,
-            points: points,
-            maxDistance: maxDistance,
-            spacing: spacing,
-            showDots: showDots,
-            showLines: showLines
+            scale,
+            scaleMobile,
+            color,
+            backgroundColor,
+            points,
+            maxDistance,
+            spacing,
+            showDots
           });
         }
       } catch (error) {
-        console.error('Error initializing Vanta:', error);
+        console.error('Vanta initialization failed:', error);
       }
     };
 
     initVanta();
 
     return () => {
-      if (vantaEffect.current) {
-        vantaEffect.current.destroy();
-      }
+      vantaEffect.current?.destroy();
+      // Optional: Remove dynamically added scripts
+      // document.querySelectorAll('script[src*="three.js"], script[src*="vanta.net"]')
+      //   .forEach(script => script.remove());
     };
-  }, [color, backgroundColor, points, maxDistance, spacing, showDots, showLines]);
+  }, [
+    color,
+    backgroundColor,
+    points,
+    maxDistance,
+    spacing,
+    showDots,
+    mouseControls,
+    touchControls,
+    gyroControls,
+    scale,
+    scaleMobile
+  ]);
+
+  const defaultContainerStyle = {
+    width: '100%',
+    height: '100vh',
+    position: 'relative',
+    overflow: 'hidden'
+  };
 
   return (
     <div
       ref={vantaRef}
-      style={{
-        width: '100%',
-        height: '100vh',
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        zIndex: 0,
-        ...style
-      }}
+      style={{ ...defaultContainerStyle, ...containerStyle }}
     >
       {children}
     </div>
