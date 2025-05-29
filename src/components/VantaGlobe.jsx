@@ -1,96 +1,100 @@
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from "react";
 
-const VantaNet = ({ 
-  children,
-  style = {},
-  color = 0x3a7bd5,
-  backgroundColor = 0x07121d,
-  points = 12,
-  maxDistance = 22,
-  spacing = 18,
-  showDots = true,
-  showLines = true
-}) => {
-  const vantaRef = useRef(null);
-  const vantaEffect = useRef(null);
+const VantaGlobe = () => {
+  const backgroundRef = useRef(null);
+  const [vantaEffect, setVantaEffect] = useState(null);
+  const [isBackgroundLoaded, setIsBackgroundLoaded] = useState(false);
 
   useEffect(() => {
-    // Load three.js from CDN
-    const loadScript = (src) => {
-      return new Promise((resolve, reject) => {
-        if (document.querySelector(`script[src="${src}"]`)) {
-          resolve();
-          return;
+    let isMounted = true;
+
+    const loadThreeJs = () => {
+      return new Promise((resolve) => {
+        // Check if THREE is already available
+        if (window.THREE) {
+          return resolve();
         }
         
-        const script = document.createElement('script');
-        script.src = src;
-        script.async = true;
-        script.onload = resolve;
-        script.onerror = reject;
-        document.body.appendChild(script);
+        // Check if THREE is already being loaded
+        if (document.querySelector('script[src*="three.js"]')) {
+          const checkInterval = setInterval(() => {
+            if (window.THREE) {
+              clearInterval(checkInterval);
+              resolve();
+            }
+          }, 100);
+          return;
+        }
+
+        const script = document.createElement("script");
+        script.src = "https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js";
+        script.onload = () => resolve();
+        document.head.appendChild(script);
       });
     };
 
-    const initVanta = async () => {
-      try {
-        await loadScript('https://cdnjs.cloudflare.com/ajax/libs/three.js/r121/three.min.js');
-        await loadScript('https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.net.min.js');
+    const loadVantaGlobe = () => {
+      return new Promise((resolve) => {
+        if (window.VANTA?.GLOBE) return resolve();
+        
+        const script = document.createElement("script");
+        script.src = "https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.globe.min.js";
+        script.onload = () => resolve();
+        document.head.appendChild(script);
+      });
+    };
 
-        if (window.VANTA?.NET && window.THREE) {
-          vantaEffect.current = window.VANTA.NET({
-            el: vantaRef.current,
-            THREE: window.THREE,
+    const initVantaEffect = async () => {
+      try {
+        await loadThreeJs();
+        await loadVantaGlobe();
+
+        if (isMounted && backgroundRef.current && !vantaEffect && window.VANTA?.GLOBE) {
+          const effect = window.VANTA.GLOBE({
+            el: backgroundRef.current,
             mouseControls: true,
             touchControls: true,
             gyroControls: false,
-            minHeight: 200,
-            minWidth: 200,
+            minHeight: 200.0,
+            minWidth: 200.0,
             scale: 1.0,
             scaleMobile: 1.0,
-            
-            // Customizable properties
-            color: typeof color === 'string' ? parseInt(color.replace('#', '0x')) : color,
-            backgroundColor: typeof backgroundColor === 'string' 
-              ? parseInt(backgroundColor.replace('#', '0x')) 
-              : backgroundColor,
-            points: points,
-            maxDistance: maxDistance,
-            spacing: spacing,
-            showDots: showDots,
-            showLines: showLines
+            color: "red",
+            color2: "red",
+            backgroundColor: "white"
           });
+
+          setVantaEffect(effect);
+          setIsBackgroundLoaded(true);
         }
       } catch (error) {
-        console.error('Error initializing Vanta:', error);
+        console.error("Error initializing Vanta Globe:", error);
       }
     };
 
-    initVanta();
+    initVantaEffect();
 
     return () => {
-      if (vantaEffect.current) {
-        vantaEffect.current.destroy();
-      }
+      isMounted = false;
+      if (vantaEffect) vantaEffect.destroy();
     };
-  }, [color, backgroundColor, points, maxDistance, spacing, showDots, showLines]);
+  }, [vantaEffect]);
 
   return (
-    <div
-      ref={vantaRef}
+    <div 
+      ref={backgroundRef} 
       style={{
-        width: '100%',
-        height: '100vh',
-        position: 'absolute',
+        position: 'fixed',
         top: 0,
         left: 0,
-        zIndex: 0,
-        ...style
+        width: '100%',
+        height: '100%',
+        zIndex: -1,
+        opacity: isBackgroundLoaded ? 0.3 : 0,
+        transition: 'opacity 0.5s ease'
       }}
-    >
-      {children}
-    </div>
+    />
   );
 };
 
-export default VantaNet;
+export default VantaGlobe;
